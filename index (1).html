@@ -1,0 +1,1106 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Атлас анатомии</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,400&family=Onest:wght@400;500;600&display=swap">
+<style>
+/* Layout: узкая боковая панель + область содержимого. Каталог (разделы с карточками) и просмотрщик (сцена + список структур). */
+:root {
+  --bg: #161922;
+  --bg-side: #0e1015;
+  --surface: #1d212b;
+  --surface-2: #272c39;
+  --line: #2b313d;
+  --fg: #e7e8f0;
+  --fg-muted: #9ca1b4;
+  --accent: #b4b2e6;
+  --select: #f2b655;
+  --tile-hi: #2b3141;
+  --tile-lo: #181b24;
+  --scrim-1: rgba(10, 12, 16, 0.92);
+  --scrim-2: rgba(10, 12, 16, 0.6);
+  --bone: #d9caa5;
+  --cartilage: #7cb9cc;
+  --muscle: #d98474;
+  --artery: #e0687d;
+  --vein: #7c97e0;
+  --lymph: #7fcfb0;
+  --nerve: #e8d27e;
+  --lung: #e3a0a0;
+  --air: #ecdcae;
+  --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 15px/1.5 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app { height: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr); }
+
+/* Боковая панель */
+.side {
+  position: relative;
+  z-index: 20;
+  width: calc(64px + env(safe-area-inset-left, 0px));
+  padding: 14px 0 14px env(safe-area-inset-left, 0px);
+  background: var(--bg-side);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.side-btn {
+  width: 100%;
+  background: none;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 2px;
+  border-radius: 8px;
+  color: var(--fg);
+  font: 500 11px/1.2 var(--font-ui);
+}
+.side-btn svg { width: 26px; height: 26px; }
+.side-btn:hover:not(:disabled) { background: var(--surface); }
+.side-btn:disabled { opacity: 0.35; cursor: default; }
+.menu-wrap { position: relative; }
+.menu {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 8px);
+  min-width: 220px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.menu button {
+  background: none;
+  border: 0;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.menu button:hover { background: var(--surface-2); }
+
+.main { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; }
+.main.is-viewer { overflow: hidden; }
+.view { min-height: 100%; }
+#viewViewer { height: 100%; }
+.page, .vpage {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-block: 14px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Верхняя строка */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--fg-muted); font-size: 14px; min-width: 0; }
+.crumb { background: none; border: 0; padding: 4px 0; color: var(--fg-muted); }
+button.crumb:hover { color: var(--fg); }
+.crumb.cur { color: var(--accent); }
+.sep { opacity: 0.6; }
+.tools { display: flex; gap: 4px; }
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  color: var(--fg-muted);
+}
+.icon-btn svg { width: 24px; height: 24px; }
+.icon-btn:hover, .icon-btn[aria-pressed="true"] { color: var(--accent); background: var(--surface); }
+
+.searchrow { margin-top: 6px; }
+.searchrow input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.searchrow input::placeholder, .panel input::placeholder { color: var(--fg-muted); }
+
+.title {
+  margin: 18px 0 10px;
+  text-align: center;
+  font: 500 clamp(32px, 5vw, 46px) / 1.1 var(--font-display);
+  letter-spacing: 0.01em;
+  color: var(--accent);
+  text-wrap: balance;
+}
+.notice {
+  margin: 0 auto;
+  max-width: 760px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  padding: 10px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--fg-muted);
+  font-size: 13.5px;
+  text-align: center;
+}
+.link-btn {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.link-btn:hover { background: var(--accent); color: var(--bg); }
+
+/* Разделы и карточки */
+.sec { margin-top: 28px; }
+.sec-head {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 40px 12px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--accent);
+  text-align: center;
+}
+.sec-title { font: 500 13px/1.3 var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; }
+.sec-latin { font: italic 400 16px/1.2 var(--font-display); color: var(--fg-muted); }
+.chev { position: absolute; right: 4px; top: 50%; width: 22px; height: 22px; margin-top: -11px; transition: transform 0.2s; }
+.sec-head[aria-expanded="false"] .chev { transform: rotate(180deg); }
+
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+@media (min-width: 1000px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; } }
+.card {
+  position: relative;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+.card:hover { border-color: var(--accent); }
+.thumb {
+  display: grid;
+  place-items: center;
+  padding-bottom: 28%;
+  aspect-ratio: 1 / 1;
+  background: radial-gradient(90% 80% at 50% 35%, var(--tile-hi), var(--tile-lo));
+}
+.thumb svg { width: 52%; height: auto; max-height: 70%; }
+.thumb[data-tone="bone"] { color: var(--bone); }
+.thumb[data-tone="muscle"] { color: var(--muscle); }
+.thumb[data-tone="artery"] { color: var(--artery); }
+.thumb[data-tone="vein"] { color: var(--vein); }
+.thumb[data-tone="lymph"] { color: var(--lymph); }
+.thumb[data-tone="nerve"] { color: var(--nerve); }
+.thumb[data-tone="lung"] { color: var(--lung); }
+.thumb[data-tone="air"] { color: var(--air); }
+.i-a { stroke: var(--cartilage); }
+.cap {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: block;
+  padding: 12px 8px 11px;
+  background: linear-gradient(to top, var(--scrim-1), var(--scrim-2));
+  font: 500 14px/1.25 var(--font-ui);
+}
+.cap small { display: none; }
+.grid.list { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.grid.list .card { display: flex; align-items: center; gap: 14px; text-align: left; padding: 8px; }
+.grid.list .thumb { width: 72px; flex: none; border-radius: 6px; padding-bottom: 0; }
+.grid.list .cap { position: static; background: none; padding: 0; }
+.grid.list .cap small { display: block; margin-top: 2px; font: italic 400 15px/1.2 var(--font-display); color: var(--fg-muted); }
+.empty { text-align: center; color: var(--fg-muted); padding: 56px 0; }
+.foot {
+  margin-top: 48px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+.credit { font: italic 500 18px/1.3 var(--font-display); color: var(--accent); }
+.src { max-width: 760px; margin: 0 auto 14px; font-size: 12.5px; line-height: 1.55; text-wrap: pretty; }
+.foot a { color: var(--accent); }
+.card.soon { opacity: 0.5; cursor: default; }
+.card.soon:hover { border-color: var(--line); }
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 9px;
+  background: var(--scrim-1);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: 500 11px/1.5 var(--font-ui);
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+.vsrc { margin: 0; font-size: 12px; color: var(--fg-muted); }
+
+/* Просмотрщик */
+.vpage { height: 100%; display: flex; flex-direction: column; gap: 10px; padding-block: 14px 16px; max-width: none; }
+.vhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.vhead h1 { margin: 0; font: 500 clamp(26px, 4vw, 36px) / 1.1 var(--font-display); color: var(--accent); }
+.vhead p { margin: 0; font: italic 400 18px/1.2 var(--font-display); color: var(--fg-muted); }
+.vbody { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; }
+@media (max-width: 820px) {
+  .vbody { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.5fr) minmax(0, 1fr); }
+}
+.stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: radial-gradient(90% 80% at 50% 40%, var(--tile-hi), var(--tile-lo));
+}
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+.overlay > * { pointer-events: auto; }
+.stage-note, .chip {
+  max-width: 100%;
+  padding: 8px 12px;
+  background: var(--scrim-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--fg);
+}
+.chip { display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px 12px; border-radius: 999px; color: var(--select); }
+.chip button { background: none; border: 0; padding: 2px 6px; color: var(--fg-muted); font-size: 16px; line-height: 1; }
+.toolbar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.tbtn {
+  pointer-events: auto;
+  background: var(--scrim-1);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.tbtn:hover { border-color: var(--accent); }
+.tbtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+.panel { min-height: 0; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.panel-head { padding: 12px 12px 8px; display: flex; flex-direction: column; gap: 8px; }
+.panel-head h2 { margin: 0; font: 600 12px/1.2 var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.panel-head h2 span { color: var(--fg-muted); font-weight: 400; margin-left: 4px; }
+.panel-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.pbtn { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+.pbtn:hover:not(:disabled) { border-color: var(--accent); }
+.pbtn:disabled { opacity: 0.4; cursor: default; }
+.pbtn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.panel input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+.parts { flex: 1; min-height: 0; margin: 0; padding: 4px 6px 8px; list-style: none; overflow-y: auto; }
+.part { display: flex; align-items: center; gap: 2px; }
+.eye { width: 34px; height: 34px; flex: none; display: grid; place-items: center; background: none; border: 0; border-radius: 6px; color: var(--fg-muted); }
+.eye svg { width: 18px; height: 18px; }
+.eye .off { display: none; }
+.eye[aria-pressed="false"] .on { display: none; }
+.eye[aria-pressed="false"] .off { display: block; }
+.eye[aria-pressed="false"] { opacity: 0.55; }
+.eye:hover { color: var(--fg); background: var(--surface-2); }
+.pname {
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pname:hover { background: var(--surface-2); }
+.part.sel .pname { background: var(--surface-2); color: var(--select); }
+
+/* Окно «Об атласе» */
+.modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(6, 8, 12, 0.7); }
+.modal-card { width: min(440px, 100%); padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.modal-card h2 { margin: 0 0 10px; font: 500 30px/1.1 var(--font-display); color: var(--accent); }
+.modal-card p { margin: 0 0 10px; color: var(--fg-muted); }
+.modal-card .actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <nav class="side" aria-label="Навигация">
+    <button class="side-btn" id="btnBack" type="button" aria-label="Назад" disabled><span data-i="back"></span>Назад</button>
+    <button class="side-btn" id="btnHome" type="button" aria-label="Каталог"><span data-i="grid"></span>Каталог</button>
+    <div class="menu-wrap">
+      <button class="side-btn" id="btnMenu" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu"><span data-i="dots"></span>Меню</button>
+      <div class="menu" id="menu" hidden>
+        <button type="button" id="menuOpen">Открыть файл .glb</button>
+        <button type="button" id="menuAbout">Об атласе</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main" id="main">
+    <section class="view" id="viewCatalog">
+      <div class="page">
+        <header class="topbar">
+          <nav class="crumbs" id="crumbsCatalog" aria-label="Путь"></nav>
+          <div class="tools">
+            <button class="icon-btn" id="btnSearch" type="button" aria-label="Поиск" aria-expanded="false" data-i="search"></button>
+            <button class="icon-btn" id="btnLayout" type="button" aria-label="Переключить вид: сетка или список" aria-pressed="false" data-i="layout"></button>
+          </div>
+        </header>
+        <div class="searchrow" id="searchRow" hidden>
+          <input id="q" type="search" placeholder="Название структуры или раздела" autocomplete="off" aria-label="Поиск по каталогу">
+        </div>
+        <h1 class="title">Атлас анатомии</h1>
+        <p class="notice">Сейчас доступна грудная клетка: сердце, лёгкие, трахея и бронхи. Остальные разделы готовятся. Свою модель в формате .glb можно открыть здесь.
+          <button class="link-btn" id="noticeOpen" type="button">Открыть .glb</button></p>
+        <div id="sections"></div>
+        <footer class="foot" id="foot">
+          <p class="src">Источник моделей: BodyParts3D, Copyright© 2008 The Database Center for Life Science, лицензия CC Attribution-Share Alike 2.1 Japan
+            (<a href="https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en_US" target="_blank" rel="noopener">описание лицензии</a>,
+            <a href="https://dbarchive.biosciencedbc.jp/data/bodyparts3d/20090209/README_e.html" target="_blank" rel="noopener">README с дополнительными условиями</a>).
+            Модели изменены: объединены в файлы .glb, повёрнуты, раскрашены, части разложены по группам. Названия частей взяты из базы BodyParts3D, у части структур названий нет и показан код FMA.
+            Эти модели распространяются на тех же условиях.</p>
+          <div class="credit">Made by Tohirov</div>
+        </footer>
+      </div>
+    </section>
+
+    <section class="view" id="viewViewer" hidden>
+      <div class="vpage">
+        <header class="topbar">
+          <nav class="crumbs" id="crumbsViewer" aria-label="Путь"></nav>
+        </header>
+        <div class="vhead"><h1 id="vTitle"></h1><p id="vLatin"></p></div>
+        <p class="vsrc" id="vSrc" hidden></p>
+        <div class="vbody">
+          <div class="stage" id="stage">
+            <div class="overlay">
+              <div class="stage-note" id="stageNote" hidden></div>
+              <div class="chip" id="selChip" hidden><span id="selName"></span><button type="button" id="selClear" aria-label="Снять выбор">×</button></div>
+            </div>
+            <div class="toolbar" role="toolbar" aria-label="Управление моделью">
+              <button class="tbtn" id="tReset" type="button">Сбросить вид</button>
+              <button class="tbtn" id="tWire" type="button" aria-pressed="false">Каркас</button>
+              <button class="tbtn" id="tSpin" type="button" aria-pressed="false">Вращение</button>
+            </div>
+          </div>
+          <aside class="panel" aria-label="Структуры">
+            <div class="panel-head">
+              <h2>Структуры<span id="partCount"></span></h2>
+              <div class="panel-actions">
+                <button class="pbtn" id="pIsolate" type="button" aria-pressed="false" disabled>Изолировать</button>
+                <button class="pbtn" id="pShowAll" type="button">Показать все</button>
+              </div>
+              <input id="partFilter" type="search" placeholder="Найти в списке" autocomplete="off" aria-label="Найти структуру в списке" hidden>
+            </div>
+            <ul class="parts" id="partList"></ul>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" hidden>
+  <div class="modal-card">
+    <h2 id="aboutTitle">Атлас анатомии</h2>
+    <p>Каталог трёхмерных моделей строения человека. Модель можно вращать и приближать, скрывать слои и выбирать отдельные структуры.</p>
+    <p>Файлы моделей подключаются отдельно. Для каждой модели будут указаны источник и лицензия.</p>
+    <div class="credit">Made by Tohirov</div>
+    <div class="actions"><button class="link-btn" id="aboutClose" type="button">Закрыть</button></div>
+  </div>
+</div>
+
+<input type="file" id="glbFile" accept=".glb" hidden>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+(function () {
+'use strict';
+
+var SOURCE_NOTE = 'Данные: BodyParts3D, Copyright© 2008 The Database Center for Life Science, CC Attribution-Share Alike 2.1 Japan. Модель изменена: объединена в .glb, повёрнута, раскрашена, части разложены по группам.';
+
+/* Каталог. У карточки с моделью указан путь к файлу (glb). Карточки без пути показываются как «Скоро». */
+var SECTIONS = [
+  { id: 'thorax', title: 'Грудная клетка; Органы грудной полости', latin: 'Thorax; Organa cavitatis thoracis', items: [
+    { id: 'thorax', name: 'Грудная клетка целиком', latin: 'Cavitas thoracis', icon: 'ribs', tone: 'muscle', glb: 'models/thorax.glb' },
+    { id: 'heart', name: 'Сердце', latin: 'Cor', icon: 'heart', tone: 'artery', glb: 'models/heart.glb' },
+    { id: 'lungs', name: 'Лёгкие', latin: 'Pulmones', icon: 'lungs', tone: 'lung', glb: 'models/lungs.glb' },
+    { id: 'airways', name: 'Трахея и бронхи', latin: 'Trachea et bronchi', icon: 'airways', tone: 'air', glb: 'models/airways.glb' }
+  ] },
+  { id: 'skeleton', title: 'Кости; Система скелета', latin: 'Ossa; Systema skeletale', items: [
+    { id: 'skull', name: 'Кости черепа', latin: 'Ossa cranii', icon: 'skull', tone: 'bone' },
+    { id: 'trunk', name: 'Кости туловища', latin: 'Ossa trunci', icon: 'ribs', tone: 'bone' },
+    { id: 'arm', name: 'Кости верхней конечности', latin: 'Ossa membri superioris', icon: 'hand', tone: 'bone' },
+    { id: 'leg', name: 'Кости нижней конечности', latin: 'Ossa membri inferioris', icon: 'foot', tone: 'bone' }
+  ] },
+  { id: 'joints', title: 'Соединения; Система соединений', latin: 'Juncturae; Systema articulare', items: [
+    { id: 'joint-types', name: 'Типы суставов', latin: 'Juncturae synoviales', icon: 'joint', tone: 'bone' },
+    { id: 'joint-moves', name: 'Суставные движения', latin: '', icon: 'move', tone: 'bone' },
+    { id: 'skull-joints', name: 'Соединения черепа', latin: 'Juncturae cranii', icon: 'sutures', tone: 'bone' },
+    { id: 'spine-joints', name: 'Соединения позвоночника', latin: 'Juncturae columnae vertebralis', icon: 'vertebrae', tone: 'bone' }
+  ] },
+  { id: 'muscles', title: 'Мышцы; Мышечная система', latin: 'Musculi; Systema musculare', items: [
+    { id: 'm-head', name: 'Мышцы головы', latin: 'Musculi capitis', icon: 'mFan', tone: 'muscle' },
+    { id: 'm-neck', name: 'Мышцы шеи', latin: 'Musculi colli', icon: 'mStrap', tone: 'muscle' },
+    { id: 'm-arm', name: 'Мышцы верхней конечности', latin: 'Musculi membri superioris', icon: 'mBiceps', tone: 'muscle' },
+    { id: 'm-leg', name: 'Мышцы нижней конечности', latin: 'Musculi membri inferioris', icon: 'mLong', tone: 'muscle' }
+  ] },
+  { id: 'vascular', title: 'Сердце и сосуды', latin: 'Systema cardiovasculare', items: [
+    { id: 'arteries', name: 'Артерии', latin: 'Arteriae', icon: 'artery', tone: 'artery' },
+    { id: 'veins', name: 'Вены', latin: 'Venae', icon: 'vein', tone: 'vein' },
+    { id: 'lymph', name: 'Лимфатические сосуды', latin: 'Vasa lymphatica', icon: 'lymph', tone: 'lymph' }
+  ] },
+  { id: 'nervous', title: 'Нервная система', latin: 'Systema nervosum', items: [
+    { id: 'brain', name: 'Головной мозг', latin: 'Encephalon', icon: 'brain', tone: 'nerve' },
+    { id: 'cord', name: 'Спинной мозг', latin: 'Medulla spinalis', icon: 'cord', tone: 'nerve' },
+    { id: 'cranial', name: 'Черепные нервы', latin: 'Nervi craniales', icon: 'cranial', tone: 'nerve' },
+    { id: 'spinal', name: 'Спинномозговые нервы', latin: 'Nervi spinales', icon: 'spinalNerves', tone: 'nerve' }
+  ] }
+];
+
+/* Иконки-заглушки для карточек (viewBox 96×96) */
+function ribs() {
+  var s = '<path d="M48 8v80"/>';
+  for (var i = 0; i < 6; i++) {
+    var y = 18 + i * 11, w = 30 - i * 3.5;
+    s += '<path d="M48 ' + y + 'C' + (48 - w * 0.5) + ' ' + (y - 5) + ' ' + (48 - w) + ' ' + (y - 1) + ' ' + (48 - w) + ' ' + (y + 10) +
+         'M48 ' + y + 'C' + (48 + w * 0.5) + ' ' + (y - 5) + ' ' + (48 + w) + ' ' + (y - 1) + ' ' + (48 + w) + ' ' + (y + 10) + '"/>';
+  }
+  return s;
+}
+function vertebrae() {
+  var s = '';
+  for (var i = 0; i < 6; i++) {
+    var y = 10 + i * 13;
+    s += '<rect x="34" y="' + y + '" width="28" height="9" rx="4"/>';
+    if (i < 5) s += '<path class="i-a" d="M41 ' + (y + 11) + 'h14"/>';
+  }
+  return s;
+}
+function cordIcon() {
+  var s = '<path d="M48 8v80"/>';
+  for (var i = 0; i < 5; i++) {
+    var y = 20 + i * 15;
+    s += '<path d="M48 ' + y + 'q-12 -2 -20 8M48 ' + y + 'q12 -2 20 8"/>';
+  }
+  return s;
+}
+function spinalNervesIcon() {
+  var s = '<path d="M48 8v80"/>';
+  for (var i = 0; i < 5; i++) {
+    var y = 18 + i * 15;
+    s += '<path d="M48 ' + y + 'h-26M48 ' + y + 'h26"/><circle class="i-a" cx="34" cy="' + y + '" r="2.6"/><circle class="i-a" cx="62" cy="' + y + '" r="2.6"/>';
+  }
+  return s;
+}
+var ICON = {
+  skull: '<path d="M48 11c-17 0-28 11-28 27 0 9 4 15 9 19v9c0 3 2 5 5 5h28c3 0 5-2 5-5v-9c5-4 9-10 9-19C76 22 65 11 48 11z"/><circle cx="37" cy="39" r="7.5"/><circle cx="59" cy="39" r="7.5"/><path d="M48 47l-4.5 9h9z"/><path d="M39 64v6M48 64v6M57 64v6"/>',
+  ribs: ribs(),
+  hand: '<rect x="28" y="52" width="40" height="30" rx="12"/><path d="M36 52V26M45 52V18M54 52V22M63 52V32M30 64L14 48"/><circle class="i-a" cx="36" cy="38" r="2.6"/><circle class="i-a" cx="45" cy="30" r="2.6"/><circle class="i-a" cx="54" cy="34" r="2.6"/><circle class="i-a" cx="63" cy="43" r="2.6"/><circle class="i-a" cx="22" cy="56" r="2.6"/>',
+  foot: '<ellipse cx="50" cy="72" rx="15" ry="13"/><path d="M40 61L31 30M46 59L42 24M52 59L53 22M58 60L64 27M63 64L74 36"/><circle class="i-a" cx="30" cy="24" r="3"/><circle class="i-a" cx="41" cy="18" r="3"/><circle class="i-a" cx="53" cy="16" r="3"/><circle class="i-a" cx="65" cy="22" r="3"/><circle class="i-a" cx="76" cy="31" r="3"/>',
+  joint: '<circle cx="54" cy="40" r="14"/><path class="i-a" d="M38 28c7-10 25-12 33-1"/><path d="M45 51L26 78"/><path d="M20 72l12 10"/>',
+  move: '<path d="M72 50a24 24 0 1 1-9-18.7"/><path class="i-a" d="M66 18l-2 14 14-3"/><path d="M48 34v28"/><circle cx="48" cy="34" r="5"/><circle cx="48" cy="62" r="5"/>',
+  sutures: '<path d="M48 12c-18 0-30 12-30 28 0 10 5 17 10 21v8h40v-8c5-4 10-11 10-21 0-16-12-28-30-28z"/><path class="i-a" d="M48 12v26M26 28c8 5 36 5 44 0M30 56c10-7 26-7 36 0"/>',
+  vertebrae: vertebrae(),
+  mFan: '<path d="M48 78L20 32M48 78L36 22M48 78L60 22M48 78L76 32"/><path d="M20 32Q48 12 76 32"/>',
+  mStrap: '<path d="M36 16c-8 20-8 44 0 64M60 16c8 20 8 44 0 64M36 16h24M36 80h24"/><path d="M48 22v52"/>',
+  mBiceps: '<path d="M20 62c8-22 30-30 44-22 8 4 10 12 4 18-12 14-34 18-48 4z"/><path d="M64 40l14-12M20 62l-8 10"/>',
+  mLong: '<path d="M48 10c14 14 18 46 0 76-18-30-14-62 0-76z"/><path d="M48 20v58"/>',
+  heart: '<path d="M48 82C20 64 14 44 24 32c8-9 20-6 24 4 4-10 16-13 24-4 10 12 4 32-24 50z"/><path class="i-a" d="M44 32c0-10 4-16 10-20M56 30c4-8 10-12 16-12"/>',
+  artery: '<path d="M48 88V50M48 50L30 30M48 50L66 30M30 30L22 14M30 30L38 12M66 30L58 12M66 30L74 14"/>',
+  vein: '<path d="M48 8v38M48 46L30 66M48 46L66 66M30 66L22 82M30 66L38 84M66 66L58 84M66 66L74 82"/>',
+  lymph: '<circle cx="30" cy="30" r="7"/><circle cx="64" cy="24" r="6"/><circle cx="46" cy="52" r="8"/><circle cx="24" cy="70" r="5"/><circle cx="70" cy="66" r="7"/><path d="M36 31L58 26M35 36L40 46M52 49L66 60M40 58L28 66"/>',
+  brain: '<path d="M48 18c-6-6-18-4-22 4-6 2-10 8-8 15-4 6-2 14 5 18 0 8 8 14 16 12 3 3 7 3 9 0 8 2 16-4 16-12 7-4 9-12 5-18 2-7-2-13-8-15-4-8-16-10-22-4z"/><path d="M48 20v52M34 34c6 2 8 6 6 10M62 34c-6 2-8 6-6 10"/>',
+  cord: cordIcon(),
+  cranial: '<circle cx="48" cy="22" r="10"/><path d="M48 32c-6 14-16 20-26 26M48 32c6 14 16 20 26 26M48 32v52M42 28c-12 4-20 2-28 10M54 28c12 4 20 2 28 10"/>',
+  spinalNerves: spinalNervesIcon(),
+  lungs: '<path d="M40 24c-8 6-18 22-20 40-1 10 6 16 14 14 4-1 6-4 6-8V32c0-4-1-6 0-8z"/><path d="M56 24c8 6 18 22 20 40 1 10-6 16-14 14-4-1-6-4-6-8V32c0-4 1-6 0-8z"/><path class="i-a" d="M48 8v26M48 34l-8 9M48 34l8 9"/>',
+  airways: '<path d="M48 8v28M48 36L30 54M48 36L66 54"/><path class="i-a" d="M30 54L18 70M30 54L30 78M30 54L42 70M66 54L78 70M66 54L66 78M66 54L54 70"/>'
+};
+function icon(name) {
+  return '<svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[name] + '</svg>';
+}
+
+/* Иконки интерфейса (viewBox 24×24) */
+var UI = {
+  back: '<path d="M20 12H4M10 6l-6 6 6 6"/>',
+  grid: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
+  list: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  dots: '<circle cx="12" cy="5" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="19" r="1.8" fill="currentColor"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/>',
+  chev: '<path d="M6 15l6-6 6 6"/>',
+  eyeOn: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="M3 3l18 18M10.6 6.1A9.7 9.7 0 0112 6c6 0 10 6 10 6a17 17 0 01-3.2 3.8M6.5 7.6C3.9 9.4 2 12 2 12s4 7 10 7c1.7 0 3.2-.4 4.5-1"/>'
+};
+function ui(name, cls) {
+  return '<svg class="' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + UI[name] + '</svg>';
+}
+
+var $ = function (s, r) { return (r || document).querySelector(s); };
+function el(tag, cls, text) {
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+var store = {
+  get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+function readCollapsed() {
+  try { var a = JSON.parse(store.get('atlas-collapsed') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+
+var state = {
+  view: 'catalog',
+  stack: [{ type: 'catalog' }],
+  query: '',
+  list: store.get('atlas-list') === '1',
+  collapsed: new Set(readCollapsed())
+};
+
+/* ---------- Навигация ---------- */
+function renderCrumbs(root, items) {
+  root.textContent = '';
+  items.forEach(function (it, i) {
+    if (i) root.appendChild(el('span', 'sep', '›'));
+    if (it.cur) {
+      var s = el('span', 'crumb cur', it.l);
+      s.setAttribute('aria-current', 'page');
+      root.appendChild(s);
+    } else {
+      var b = el('button', 'crumb', it.l);
+      b.type = 'button';
+      b.addEventListener('click', home);
+      root.appendChild(b);
+    }
+  });
+}
+function setView(v) {
+  state.view = v;
+  $('#viewCatalog').hidden = v !== 'catalog';
+  $('#viewViewer').hidden = v !== 'viewer';
+  $('#main').classList.toggle('is-viewer', v === 'viewer');
+  $('#main').scrollTop = 0;
+  $('#btnBack').disabled = state.stack.length <= 1;
+  closeMenu();
+}
+function render(entry) {
+  if (entry.type === 'catalog') {
+    setView('catalog');
+    renderCrumbs($('#crumbsCatalog'), [{ l: 'Главная' }, { l: 'Атлас анатомии', cur: true }]);
+    renderCatalog();
+  } else {
+    setView('viewer');
+    openModel(entry);
+  }
+}
+function push(entry) { state.stack.push(entry); render(entry); }
+function back() {
+  if (state.stack.length > 1) { state.stack.pop(); render(state.stack[state.stack.length - 1]); }
+}
+function home() { state.stack = [{ type: 'catalog' }]; render(state.stack[0]); }
+
+/* ---------- Каталог ---------- */
+function renderCatalog() {
+  var q = state.query.trim().toLowerCase();
+  var root = $('#sections');
+  root.textContent = '';
+  var shown = 0;
+  SECTIONS.forEach(function (sec) {
+    var items = sec.items.filter(function (it) {
+      return !q || (it.name + ' ' + it.latin + ' ' + sec.title + ' ' + sec.latin).toLowerCase().indexOf(q) !== -1;
+    });
+    if (!items.length) return;
+    shown += items.length;
+    var open = q ? true : !state.collapsed.has(sec.id);
+
+    var section = el('section', 'sec');
+    var head = el('button', 'sec-head');
+    head.type = 'button';
+    head.setAttribute('aria-expanded', String(open));
+    head.appendChild(el('span', 'sec-title', sec.title));
+    head.appendChild(el('span', 'sec-latin', sec.latin));
+    head.insertAdjacentHTML('beforeend', ui('chev', 'chev'));
+    var grid = el('div', 'grid' + (state.list ? ' list' : ''));
+    grid.hidden = !open;
+
+    head.addEventListener('click', function () {
+      var nowOpen = head.getAttribute('aria-expanded') !== 'true';
+      head.setAttribute('aria-expanded', String(nowOpen));
+      grid.hidden = !nowOpen;
+      if (!q) {
+        if (nowOpen) state.collapsed.delete(sec.id); else state.collapsed.add(sec.id);
+        store.set('atlas-collapsed', JSON.stringify(Array.from(state.collapsed)));
+      }
+    });
+
+    items.forEach(function (it) {
+      var card = el('button', 'card');
+      card.type = 'button';
+      var thumb = el('span', 'thumb');
+      thumb.dataset.tone = it.tone;
+      thumb.innerHTML = icon(it.icon);
+      var cap = el('span', 'cap', it.name);
+      if (it.latin) cap.appendChild(el('small', null, it.latin));
+      card.append(thumb, cap);
+      if (it.glb) {
+        card.addEventListener('click', function () {
+          push({ type: 'viewer', title: it.name, latin: it.latin, glb: it.glb, src: SOURCE_NOTE });
+        });
+      } else {
+        card.classList.add('soon');
+        card.disabled = true;
+        card.appendChild(el('span', 'badge', 'Скоро'));
+      }
+      grid.appendChild(card);
+    });
+    section.append(head, grid);
+    root.appendChild(section);
+  });
+  if (!shown) root.appendChild(el('p', 'empty', 'Ничего не найдено. Попробуйте другое название.'));
+}
+function updateLayoutBtn() {
+  var b = $('#btnLayout');
+  b.innerHTML = ui(state.list ? 'list' : 'grid');
+  b.setAttribute('aria-pressed', String(state.list));
+}
+
+/* ---------- 3D-просмотрщик ---------- */
+var V = { ready: false, failed: false, running: false, parts: [], items: [], selected: null, isolated: false, wire: false, group: null, initial: null };
+var loadId = 0;
+var DEMO_NOTE = 'Модель для этого раздела ещё не подключена. Показана демонстрационная заготовка, на ней можно проверить вращение, слои и выбор.';
+
+function setNote(msg) {
+  var n = $('#stageNote');
+  n.textContent = msg || '';
+  n.hidden = !msg;
+}
+function mats(m) { return Array.isArray(m.material) ? m.material : [m.material]; }
+
+function initViewer() {
+  if (V.ready) return true;
+  if (V.failed) return false;
+  try {
+    if (!window.THREE || !THREE.OrbitControls || !THREE.GLTFLoader) throw new Error('three');
+    var stage = $('#stage');
+    var r = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    r.outputEncoding = THREE.sRGBEncoding;
+    stage.insertBefore(r.domElement, stage.firstChild);
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
+    scene.add(camera);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3f4d, 0.95));
+    var key = new THREE.DirectionalLight(0xffffff, 0.8);
+    key.position.set(1, 1.2, 2);
+    camera.add(key);
+    var controls = new THREE.OrbitControls(camera, r.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.autoRotateSpeed = 1.6;
+    V.renderer = r; V.scene = scene; V.camera = camera; V.controls = controls;
+    V.raycaster = new THREE.Raycaster();
+    V.canvas = r.domElement;
+
+    var down = null;
+    V.canvas.addEventListener('pointerdown', function (e) {
+      down = { x: e.clientX, y: e.clientY };
+      if (V.noteTemp) { setNote(''); V.noteTemp = false; }
+    });
+    V.canvas.addEventListener('pointerup', function (e) {
+      if (!down) return;
+      var d = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+      down = null;
+      if (d <= 5) pick(e);
+    });
+    new ResizeObserver(resize).observe(stage);
+    V.ready = true;
+    return true;
+  } catch (e) {
+    V.failed = true;
+    setNote('3D-просмотр недоступен: не загрузилась библиотека или браузер не поддерживает WebGL. Обновите страницу.');
+    return false;
+  }
+}
+function resize() {
+  if (!V.ready) return;
+  var stage = $('#stage');
+  var w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return;
+  V.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  V.renderer.setSize(w, h, false);
+  V.camera.aspect = w / h;
+  V.camera.updateProjectionMatrix();
+}
+function startLoop() {
+  if (V.running || !V.ready) return;
+  V.running = true;
+  (function tick() {
+    if (state.view !== 'viewer') { V.running = false; return; }
+    V.controls.update();
+    V.renderer.render(V.scene, V.camera);
+    requestAnimationFrame(tick);
+  })();
+}
+
+function buildDemo() {
+  var g = new THREE.Group();
+  function mat(c) { return new THREE.MeshStandardMaterial({ color: c, roughness: 0.65, metalness: 0.05 }); }
+  var ball = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), mat(0xd9caa5));
+  ball.name = 'Демо: шар';
+  ball.position.set(-1.7, 0.6, 0);
+  var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 3, 40), mat(0xc9b88f));
+  rod.name = 'Демо: стержень';
+  rod.rotation.z = Math.PI / 2.6;
+  rod.position.set(0.2, -0.4, 0);
+  var ring = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.26, 24, 64), mat(0x7cb9cc));
+  ring.name = 'Демо: кольцо';
+  ring.position.set(1.9, -1.1, 0);
+  ring.rotation.x = Math.PI / 3;
+  g.add(ball, rod, ring);
+  return g;
+}
+
+function clearModel() {
+  if (V.group) {
+    V.scene.remove(V.group);
+    V.group.traverse(function (o) {
+      if (o.isMesh) {
+        if (o.geometry) o.geometry.dispose();
+        mats(o).forEach(function (m) { if (m.map) m.map.dispose(); m.dispose(); });
+      }
+    });
+  }
+  V.group = null; V.parts = []; V.items = []; V.selected = null; V.isolated = false; V.wire = false;
+  $('#tWire').setAttribute('aria-pressed', 'false');
+}
+function partName(m, i) {
+  var n = (m.userData && m.userData.name) || (m.name && m.name.trim()) || (m.parent && m.parent.name && m.parent.name.trim()) || '';
+  if (!(m.userData && m.userData.name)) n = n.replace(/_/g, ' ');
+  n = n.trim();
+  return n || 'Часть ' + (i + 1);
+}
+function setModel(group) {
+  clearModel();
+  V.group = group;
+  V.scene.add(group);
+  group.traverse(function (o) {
+    if (o.isMesh) {
+      o.material = Array.isArray(o.material) ? o.material.map(function (m) { return m.clone(); }) : o.material.clone();
+      o.userData.idx = V.parts.length;
+      V.parts.push(o);
+    }
+  });
+  fit();
+  renderParts();
+  V.parts.forEach(function (p) { if (p.userData.hidden) setVisible(p, false); });
+  select(null);
+  updateIsolate();
+}
+function fit() {
+  var box = new THREE.Box3().setFromObject(V.group);
+  var size = box.getSize(new THREE.Vector3());
+  var center = box.getCenter(new THREE.Vector3());
+  var maxDim = Math.max(size.x, size.y, size.z) || 1;
+  var dist = (maxDim / (2 * Math.tan((V.camera.fov * Math.PI) / 360))) * 1.7;
+  V.camera.position.copy(center).add(new THREE.Vector3(0.35, 0.25, 1).normalize().multiplyScalar(dist));
+  V.camera.near = dist / 100;
+  V.camera.far = dist * 100;
+  V.camera.updateProjectionMatrix();
+  V.controls.target.copy(center);
+  V.controls.minDistance = dist * 0.15;
+  V.controls.maxDistance = dist * 4;
+  V.controls.update();
+  V.initial = { pos: V.camera.position.clone(), target: center.clone() };
+}
+
+function renderParts() {
+  var ul = $('#partList');
+  ul.textContent = '';
+  V.items = [];
+  V.parts.forEach(function (m, i) {
+    var name = partName(m, i);
+    var li = el('li', 'part');
+    var eye = el('button', 'eye');
+    eye.type = 'button';
+    eye.setAttribute('aria-pressed', 'true');
+    eye.setAttribute('aria-label', 'Показать или скрыть: ' + name);
+    eye.innerHTML = ui('eyeOn', 'on') + ui('eyeOff', 'off');
+    var nb = el('button', 'pname', name);
+    nb.type = 'button';
+    nb.title = m.userData && m.userData.id ? name + ' · ' + m.userData.id : name;
+    eye.addEventListener('click', function () { setVisible(m, !m.visible); });
+    nb.addEventListener('click', function () { select(V.selected === m ? null : m); });
+    li.append(eye, nb);
+    ul.appendChild(li);
+    V.items.push({ li: li, eye: eye, name: name, m: m });
+  });
+  $('#partCount').textContent = String(V.parts.length);
+  var f = $('#partFilter');
+  f.value = '';
+  f.hidden = V.parts.length < 8;
+}
+function setVisible(m, v) {
+  m.visible = v;
+  var it = V.items[m.userData.idx];
+  if (it) it.eye.setAttribute('aria-pressed', String(v));
+}
+function select(m) {
+  if (V.selected) {
+    mats(V.selected).forEach(function (x) { if (x.emissive && x.userData.em !== undefined) x.emissive.setHex(x.userData.em); });
+  }
+  V.selected = m;
+  if (m) {
+    mats(m).forEach(function (x) {
+      if (x.emissive) {
+        if (x.userData.em === undefined) x.userData.em = x.emissive.getHex();
+        x.emissive.setHex(0x7a5412);
+      }
+    });
+  }
+  V.items.forEach(function (it) { it.li.classList.toggle('sel', it.m === m); });
+  var chip = $('#selChip');
+  chip.hidden = !m;
+  if (m) {
+    $('#selName').textContent = partName(m, m.userData.idx);
+    var it = V.items[m.userData.idx];
+    if (it && !it.li.hidden) it.li.scrollIntoView({ block: 'nearest' });
+  }
+  updateIsolate();
+}
+function pick(e) {
+  var r = V.canvas.getBoundingClientRect();
+  var x = ((e.clientX - r.left) / r.width) * 2 - 1;
+  var y = -((e.clientY - r.top) / r.height) * 2 + 1;
+  V.raycaster.setFromCamera({ x: x, y: y }, V.camera);
+  var hits = V.raycaster.intersectObjects(V.parts.filter(function (p) { return p.visible; }), false);
+  select(hits.length ? hits[0].object : null);
+}
+function showAll() {
+  V.parts.forEach(function (p) { setVisible(p, true); });
+  V.isolated = false;
+  updateIsolate();
+}
+function updateIsolate() {
+  var b = $('#pIsolate');
+  b.setAttribute('aria-pressed', String(V.isolated));
+  b.textContent = V.isolated ? 'Снять изоляцию' : 'Изолировать';
+  b.disabled = !V.isolated && !V.selected;
+}
+
+function openModel(entry) {
+  renderCrumbs($('#crumbsViewer'), [{ l: 'Главная' }, { l: 'Атлас анатомии' }, { l: entry.title, cur: true }]);
+  $('#vTitle').textContent = entry.title;
+  var lat = $('#vLatin');
+  lat.textContent = entry.latin || '';
+  lat.hidden = !entry.latin;
+  var srcEl = $('#vSrc');
+  srcEl.textContent = entry.src || '';
+  srcEl.hidden = !entry.src;
+  setNote('');
+  V.noteTemp = false;
+  if (!initViewer()) return;
+  startLoop();
+  requestAnimationFrame(resize);
+  var id = ++loadId;
+  function demo(msg) {
+    if (id !== loadId) return;
+    setModel(buildDemo());
+    setNote(msg || DEMO_NOTE);
+  }
+  function done(gltf) {
+    if (id !== loadId) return;
+    setModel(gltf.scene);
+    var nh = V.parts.filter(function (p) { return p.userData.hidden; }).length;
+    setNote(nh ? 'Скрыто частей: ' + nh + ' (составные органы, полости, дубли). Показать: значок глаза в списке или «Показать все».' : '');
+    V.noteTemp = nh > 0;
+  }
+  var bad = 'Файл не удалось прочитать. Нужен бинарный файл .glb.';
+  if (entry.buffer) {
+    try { new THREE.GLTFLoader().parse(entry.buffer, '', done, function () { demo(bad); }); }
+    catch (e) { demo(bad); }
+  } else if (entry.glb) {
+    /* Файлы моделей лежат рядом со страницей как текст base64 (<путь>.txt), потому что .glb площадка не отдаёт. */
+    setNote('Загрузка модели…');
+    fetch(entry.glb + '.txt').then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    }).then(function (t) {
+      var bin = atob(t.trim());
+      var buf = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+      if (id !== loadId) return;
+      new THREE.GLTFLoader().parse(buf.buffer, '', done, function () { demo(bad); });
+    }).catch(function () {
+      demo('Не удалось загрузить файл модели. Обновите страницу и откройте раздел ещё раз.');
+    });
+  } else {
+    demo();
+  }
+}
+
+/* ---------- Меню, окна, события ---------- */
+function closeMenu() {
+  $('#menu').hidden = true;
+  $('#btnMenu').setAttribute('aria-expanded', 'false');
+}
+function openFilePicker() { closeMenu(); $('#glbFile').click(); }
+
+function init() {
+  document.querySelectorAll('[data-i]').forEach(function (n) {
+    var k = n.dataset.i;
+    if (k === 'layout') return;
+    n.insertAdjacentHTML('afterbegin', ui(k));
+  });
+  updateLayoutBtn();
+
+  $('#btnBack').addEventListener('click', back);
+  $('#btnHome').addEventListener('click', home);
+  $('#btnMenu').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var m = $('#menu');
+    m.hidden = !m.hidden;
+    this.setAttribute('aria-expanded', String(!m.hidden));
+  });
+  document.addEventListener('click', function (e) { if (!e.target.closest('.menu-wrap')) closeMenu(); });
+  $('#menuOpen').addEventListener('click', openFilePicker);
+  $('#noticeOpen').addEventListener('click', openFilePicker);
+  $('#menuAbout').addEventListener('click', function () { closeMenu(); $('#about').hidden = false; $('#aboutClose').focus(); });
+  $('#aboutClose').addEventListener('click', function () { $('#about').hidden = true; });
+  $('#about').addEventListener('click', function (e) { if (e.target === this) this.hidden = true; });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    $('#about').hidden = true;
+    closeMenu();
+  });
+
+  $('#glbFile').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    f.arrayBuffer().then(function (buf) {
+      push({ type: 'viewer', title: f.name.replace(/\.[^.]+$/, ''), latin: 'Файл с вашего устройства', buffer: buf });
+    }).catch(function () {
+      push({ type: 'viewer', title: f.name, latin: '', glb: null });
+      setNote('Не удалось открыть файл.');
+    });
+  });
+
+  $('#btnSearch').addEventListener('click', function () {
+    var row = $('#searchRow');
+    row.hidden = !row.hidden;
+    this.setAttribute('aria-expanded', String(!row.hidden));
+    if (row.hidden) { state.query = ''; $('#q').value = ''; renderCatalog(); } else { $('#q').focus(); }
+  });
+  $('#q').addEventListener('input', function () { state.query = this.value; renderCatalog(); });
+  $('#btnLayout').addEventListener('click', function () {
+    state.list = !state.list;
+    store.set('atlas-list', state.list ? '1' : '0');
+    updateLayoutBtn();
+    renderCatalog();
+  });
+
+  $('#tReset').addEventListener('click', function () {
+    if (!V.initial) return;
+    V.camera.position.copy(V.initial.pos);
+    V.controls.target.copy(V.initial.target);
+    V.controls.update();
+  });
+  $('#tWire').addEventListener('click', function () {
+    V.wire = !V.wire;
+    this.setAttribute('aria-pressed', String(V.wire));
+    V.parts.forEach(function (p) { mats(p).forEach(function (m) { m.wireframe = V.wire; }); });
+  });
+  $('#tSpin').addEventListener('click', function () {
+    var on = this.getAttribute('aria-pressed') !== 'true';
+    this.setAttribute('aria-pressed', String(on));
+    if (V.controls) V.controls.autoRotate = on;
+  });
+  $('#selClear').addEventListener('click', function () { select(null); });
+  $('#pIsolate').addEventListener('click', function () {
+    if (!V.isolated) {
+      if (!V.selected) return;
+      V.parts.forEach(function (p) { setVisible(p, p === V.selected); });
+      V.isolated = true;
+      updateIsolate();
+    } else {
+      showAll();
+    }
+  });
+  $('#pShowAll').addEventListener('click', showAll);
+  $('#partFilter').addEventListener('input', function () {
+    var q = this.value.trim().toLowerCase();
+    V.items.forEach(function (it) { it.li.hidden = !!q && it.name.toLowerCase().indexOf(q) === -1; });
+  });
+
+  render(state.stack[0]);
+}
+init();
+})();
+</script>
+
+</body></html>
