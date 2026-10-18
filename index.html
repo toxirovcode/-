@@ -1,10 +1,10 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Атлас анатомии</title>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--fg)}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Anatomiya Atlasi</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,400&family=Onest:wght@400;500;600&display=swap">
 <style>
-/* Layout: узкая боковая панель + область содержимого. Каталог (разделы с карточками) и просмотрщик (сцена + список структур). */
-:root {
+/* Темная и светлая темы */
+:root, [data-theme="dark"] {
   --bg: #161922;
   --bg-side: #0e1015;
   --surface: #1d212b;
@@ -27,10 +27,34 @@
   --nerve: #e8d27e;
   --lung: #e3a0a0;
   --air: #ecdcae;
-  --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-  --font-ui: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color-scheme: dark;
 }
+[data-theme="light"] {
+  --bg: #f4f5f9;
+  --bg-side: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #eaeaef;
+  --line: #d2d5df;
+  --fg: #1a1c23;
+  --fg-muted: #62677a;
+  --accent: #5e5cc7;
+  --select: #c27d00;
+  --tile-hi: #e8eaf2;
+  --tile-lo: #f8f9fd;
+  --scrim-1: rgba(240, 242, 246, 0.92);
+  --scrim-2: rgba(240, 242, 246, 0.7);
+  --bone: #a8966e;
+  --cartilage: #43879e;
+  --muscle: #bd5947;
+  --artery: #b83b52;
+  --vein: #4c6ab8;
+  --lymph: #3b9671;
+  --nerve: #b39b36;
+  --lung: #c26666;
+  --air: #b59f6b;
+  color-scheme: light;
+}
+
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
@@ -86,7 +110,7 @@ button { cursor: pointer; }
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
 }
 .menu button {
   background: none;
@@ -98,14 +122,14 @@ button { cursor: pointer; }
 }
 .menu button:hover { background: var(--surface-2); }
 
-.main { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; }
+.main { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; position: relative; }
 .main.is-viewer { overflow: hidden; }
 .view { min-height: 100%; }
 #viewViewer { height: 100%; }
 .page, .vpage {
   max-width: 1120px;
   margin: 0 auto;
-  padding-block: 14px 40px;
+  padding-block: 14px 60px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
@@ -250,7 +274,6 @@ button.crumb:hover { color: var(--fg); }
   color: var(--fg-muted);
   font-size: 13px;
 }
-.credit { font: italic 500 18px/1.3 var(--font-display); color: var(--accent); }
 .src { max-width: 760px; margin: 0 auto 14px; font-size: 12.5px; line-height: 1.55; text-wrap: pretty; }
 .foot a { color: var(--accent); }
 .card.soon { opacity: 0.5; cursor: default; }
@@ -268,6 +291,23 @@ button.crumb:hover { color: var(--fg); }
   color: var(--fg-muted);
 }
 .vsrc { margin: 0; font-size: 12px; color: var(--fg-muted); }
+
+/* Плавающий водяной знак «Made by Toxirov» */
+.floating-badge {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  font: 600 13px/1.3 var(--font-ui);
+  color: var(--accent);
+  pointer-events: none;
+  opacity: 0.85;
+}
 
 /* Просмотрщик */
 .vpage { height: 100%; display: flex; flex-direction: column; gap: 10px; padding-block: 14px 16px; max-width: none; }
@@ -375,7 +415,7 @@ button.crumb:hover { color: var(--fg); }
 .pname:hover { background: var(--surface-2); }
 .part.sel .pname { background: var(--surface-2); color: var(--select); }
 
-/* Окно «Об атласе» */
+/* Окно «Atlas haqida» */
 .modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(6, 8, 12, 0.7); }
 .modal-card { width: min(440px, 100%); padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .modal-card h2 { margin: 0 0 10px; font: 500 30px/1.1 var(--font-display); color: var(--accent); }
@@ -386,14 +426,15 @@ button.crumb:hover { color: var(--fg); }
 </style>
 
 <div class="app">
-  <nav class="side" aria-label="Навигация">
-    <button class="side-btn" id="btnBack" type="button" aria-label="Назад" disabled><span data-i="back"></span>Назад</button>
-    <button class="side-btn" id="btnHome" type="button" aria-label="Каталог"><span data-i="grid"></span>Каталог</button>
+  <nav class="side" aria-label="Navigatsiya">
+    <button class="side-btn" id="btnBack" type="button" aria-label="Orqaga" disabled><span data-i="back"></span>Orqaga</button>
+    <button class="side-btn" id="btnHome" type="button" aria-label="Katalog"><span data-i="grid"></span>Katalog</button>
     <div class="menu-wrap">
-      <button class="side-btn" id="btnMenu" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu"><span data-i="dots"></span>Меню</button>
+      <button class="side-btn" id="btnMenu" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu"><span data-i="dots"></span>Menyu</button>
       <div class="menu" id="menu" hidden>
-        <button type="button" id="menuOpen">Открыть файл .glb</button>
-        <button type="button" id="menuAbout">Об атласе</button>
+        <button type="button" id="menuTheme">Mavzuni almashtirish (Dark/Light)</button>
+        <button type="button" id="menuOpen">.glb faylni ochish</button>
+        <button type="button" id="menuAbout">Atlas haqida</button>
       </div>
     </div>
   </nav>
@@ -402,25 +443,25 @@ button.crumb:hover { color: var(--fg); }
     <section class="view" id="viewCatalog">
       <div class="page">
         <header class="topbar">
-          <nav class="crumbs" id="crumbsCatalog" aria-label="Путь"></nav>
+          <nav class="crumbs" id="crumbsCatalog" aria-label="Yo'l"></nav>
           <div class="tools">
-            <button class="icon-btn" id="btnSearch" type="button" aria-label="Поиск" aria-expanded="false" data-i="search"></button>
-            <button class="icon-btn" id="btnLayout" type="button" aria-label="Переключить вид: сетка или список" aria-pressed="false" data-i="layout"></button>
+            <button class="icon-btn" id="btnSearch" type="button" aria-label="Qidiruv" aria-expanded="false" data-i="search"></button>
+            <button class="icon-btn" id="btnLayout" type="button" aria-label="Ko'rinishni o'zgartirish" aria-pressed="false" data-i="layout"></button>
           </div>
         </header>
         <div class="searchrow" id="searchRow" hidden>
-          <input id="q" type="search" placeholder="Название структуры или раздела" autocomplete="off" aria-label="Поиск по каталогу">
+          <input id="q" type="search" placeholder="Tuzilma yoki bo'lim nomi" autocomplete="off" aria-label="Katalog bo'yicha qidirish">
         </div>
-        <h1 class="title">Атлас анатомии</h1>
-        <p class="notice">Сейчас доступна грудная клетка: сердце, лёгкие, трахея и бронхи. Остальные разделы готовятся. Свою модель в формате .glb можно открыть здесь.
-          <button class="link-btn" id="noticeOpen" type="button">Открыть .glb</button></p>
+        <h1 class="title">Anatomiya Atlasi</h1>
+        <p class="notice">Hozirda ko'krak qafasi bo'limi mavjud: yurak, o'pka, traxeya va bronxlar. Qolgan bo'limlar tayyorlanmoqda. O'z modelingizni .glb formatida shu yerda ochishingiz mumkin.
+          <button class="link-btn" id="noticeOpen" type="button">.glb ochish</button></p>
         <div id="sections"></div>
         <footer class="foot" id="foot">
-          <p class="src">Источник моделей: BodyParts3D, Copyright© 2008 The Database Center for Life Science, лицензия CC Attribution-Share Alike 2.1 Japan
-            (<a href="https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en_US" target="_blank" rel="noopener">описание лицензии</a>,
-            <a href="https://dbarchive.biosciencedbc.jp/data/bodyparts3d/20090209/README_e.html" target="_blank" rel="noopener">README с дополнительными условиями</a>).
-            Модели изменены: объединены в файлы .glb, повёрнуты, раскрашены, части разложены по группам. Названия частей взяты из базы BodyParts3D, у части структур названий нет и показан код FMA.
-            Эти модели распространяются на тех же условиях.</p>
+          <p class="src">Modellar manbasi: BodyParts3D, Copyright© 2008 The Database Center for Life Science, CC Attribution-Share Alike 2.1 Japan litsenziyasi
+            (<a href="https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en_US" target="_blank" rel="noopener">litsenziya tavsifi</a>,
+            <a href="https://dbarchive.biosciencedbc.jp/data/bodyparts3d/20090209/README_e.html" target="_blank" rel="noopener">Qo'shimcha shartlar README</a>).
+            Modellar o'zgartirilgan: .glb formatiga birlashtirilgan, aylantirilgan, bo'yalgan va qismlarga bo'lingan. Qismlar nomlari BodyParts3D bazasidan olingan.
+            Ushbu modellar ham shu shartlar asosida tarqatiladi.</p>
           <div class="credit">Made by Tohirov</div>
         </footer>
       </div>
@@ -429,7 +470,7 @@ button.crumb:hover { color: var(--fg); }
     <section class="view" id="viewViewer" hidden>
       <div class="vpage">
         <header class="topbar">
-          <nav class="crumbs" id="crumbsViewer" aria-label="Путь"></nav>
+          <nav class="crumbs" id="crumbsViewer" aria-label="Yo'l"></nav>
         </header>
         <div class="vhead"><h1 id="vTitle"></h1><p id="vLatin"></p></div>
         <p class="vsrc" id="vSrc" hidden></p>
@@ -437,22 +478,22 @@ button.crumb:hover { color: var(--fg); }
           <div class="stage" id="stage">
             <div class="overlay">
               <div class="stage-note" id="stageNote" hidden></div>
-              <div class="chip" id="selChip" hidden><span id="selName"></span><button type="button" id="selClear" aria-label="Снять выбор">×</button></div>
+              <div class="chip" id="selChip" hidden><span id="selName"></span><button type="button" id="selClear" aria-label="Tanlovni bekor qilish">×</button></div>
             </div>
-            <div class="toolbar" role="toolbar" aria-label="Управление моделью">
-              <button class="tbtn" id="tReset" type="button">Сбросить вид</button>
-              <button class="tbtn" id="tWire" type="button" aria-pressed="false">Каркас</button>
-              <button class="tbtn" id="tSpin" type="button" aria-pressed="false">Вращение</button>
+            <div class="toolbar" role="toolbar" aria-label="Modelni boshqarish">
+              <button class="tbtn" id="tReset" type="button">Ko'rinishni tiklash</button>
+              <button class="tbtn" id="tWire" type="button" aria-pressed="false">Karkas</button>
+              <button class="tbtn" id="tSpin" type="button" aria-pressed="false">Aylanish</button>
             </div>
           </div>
-          <aside class="panel" aria-label="Структуры">
+          <aside class="panel" aria-label="Tuzilmalar">
             <div class="panel-head">
-              <h2>Структуры<span id="partCount"></span></h2>
+              <h2>Tuzilmalar<span id="partCount"></span></h2>
               <div class="panel-actions">
-                <button class="pbtn" id="pIsolate" type="button" aria-pressed="false" disabled>Изолировать</button>
-                <button class="pbtn" id="pShowAll" type="button">Показать все</button>
+                <button class="pbtn" id="pIsolate" type="button" aria-pressed="false" disabled>Ajratib ko'rsatish</button>
+                <button class="pbtn" id="pShowAll" type="button">Barchasini ko'rsatish</button>
               </div>
-              <input id="partFilter" type="search" placeholder="Найти в списке" autocomplete="off" aria-label="Найти структуру в списке" hidden>
+              <input id="partFilter" type="search" placeholder="Ro'yxatdan topish" autocomplete="off" aria-label="Ro'yxatdan tuzilmani topish" hidden>
             </div>
             <ul class="parts" id="partList"></ul>
           </aside>
@@ -462,13 +503,16 @@ button.crumb:hover { color: var(--fg); }
   </main>
 </div>
 
+<!-- Плавающая надпись Made by Toxirov -->
+<div class="floating-badge">Made by Tohirov</div>
+
 <div class="modal" id="about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" hidden>
   <div class="modal-card">
-    <h2 id="aboutTitle">Атлас анатомии</h2>
-    <p>Каталог трёхмерных моделей строения человека. Модель можно вращать и приближать, скрывать слои и выбирать отдельные структуры.</p>
-    <p>Файлы моделей подключаются отдельно. Для каждой модели будут указаны источник и лицензия.</p>
+    <h2 id="aboutTitle">Anatomiya Atlasi</h2>
+    <p>Inson tuzilishining uch o'lchamli modellari katalogi. Modelni aylantirish, yaqinlashtirish, qatlamlarni yashirish va alohida tuzilmalarni tanlash mumkin.</p>
+    <p>Model fayllari alohida ulanadi. Har bir model uchun manba va litsenziya ko'rsatilgan.</p>
     <div class="credit">Made by Tohirov</div>
-    <div class="actions"><button class="link-btn" id="aboutClose" type="button">Закрыть</button></div>
+    <div class="actions"><button class="link-btn" id="aboutClose" type="button">Yopish</button></div>
   </div>
 </div>
 
@@ -481,48 +525,46 @@ button.crumb:hover { color: var(--fg); }
 (function () {
 'use strict';
 
-var SOURCE_NOTE = 'Данные: BodyParts3D, Copyright© 2008 The Database Center for Life Science, CC Attribution-Share Alike 2.1 Japan. Модель изменена: объединена в .glb, повёрнута, раскрашена, части разложены по группам.';
+var SOURCE_NOTE = 'Ma\'lumotlar: BodyParts3D, Copyright© 2008 The Database Center for Life Science, CC Attribution-Share Alike 2.1 Japan. Model o\'zgartirilgan: .glb formatiga birlashtirilgan, aylantirilgan, bo\'yalgan va guruhlarga bo\'lingan.';
 
-/* Каталог. У карточки с моделью указан путь к файлу (glb). Карточки без пути показываются как «Скоро». */
 var SECTIONS = [
-  { id: 'thorax', title: 'Грудная клетка; Органы грудной полости', latin: 'Thorax; Organa cavitatis thoracis', items: [
-    { id: 'thorax', name: 'Грудная клетка целиком', latin: 'Cavitas thoracis', icon: 'ribs', tone: 'muscle', glb: 'models/thorax.glb' },
-    { id: 'heart', name: 'Сердце', latin: 'Cor', icon: 'heart', tone: 'artery', glb: 'models/heart.glb' },
-    { id: 'lungs', name: 'Лёгкие', latin: 'Pulmones', icon: 'lungs', tone: 'lung', glb: 'models/lungs.glb' },
-    { id: 'airways', name: 'Трахея и бронхи', latin: 'Trachea et bronchi', icon: 'airways', tone: 'air', glb: 'models/airways.glb' }
+  { id: 'thorax', title: 'Ko\'krak qasafi; Ko\'krak bo'shlig'i a'zolari', latin: 'Thorax; Organa cavitatis thoracis', items: [
+    { id: 'thorax', name: 'Ko\'krak qafasi to\'liq', latin: 'Cavitas thoracis', icon: 'ribs', tone: 'muscle', glb: 'models/thorax.glb' },
+    { id: 'heart', name: 'Yurak', latin: 'Cor', icon: 'heart', tone: 'artery', glb: 'models/heart.glb' },
+    { id: 'lungs', name: 'O\'pka', latin: 'Pulmones', icon: 'lungs', tone: 'lung', glb: 'models/lungs.glb' },
+    { id: 'airways', name: 'Traxeya va bronxlar', latin: 'Trachea et bronchi', icon: 'airways', tone: 'air', glb: 'models/airways.glb' }
   ] },
-  { id: 'skeleton', title: 'Кости; Система скелета', latin: 'Ossa; Systema skeletale', items: [
-    { id: 'skull', name: 'Кости черепа', latin: 'Ossa cranii', icon: 'skull', tone: 'bone' },
-    { id: 'trunk', name: 'Кости туловища', latin: 'Ossa trunci', icon: 'ribs', tone: 'bone' },
-    { id: 'arm', name: 'Кости верхней конечности', latin: 'Ossa membri superioris', icon: 'hand', tone: 'bone' },
-    { id: 'leg', name: 'Кости нижней конечности', latin: 'Ossa membri inferioris', icon: 'foot', tone: 'bone' }
+  { id: 'skeleton', title: 'Suyaklar; Skelet tizimi', latin: 'Ossa; Systema skeletale', items: [
+    { id: 'skull', name: 'Kalla suyagi', latin: 'Ossa cranii', icon: 'skull', tone: 'bone' },
+    { id: 'trunk', name: 'Tana suyaklari', latin: 'Ossa trunci', icon: 'ribs', tone: 'bone' },
+    { id: 'arm', name: 'Yuqori qo\'l suyaklari', latin: 'Ossa membri superioris', icon: 'hand', tone: 'bone' },
+    { id: 'leg', name: 'Pastki oyoq suyaklari', latin: 'Ossa membri inferioris', icon: 'foot', tone: 'bone' }
   ] },
-  { id: 'joints', title: 'Соединения; Система соединений', latin: 'Juncturae; Systema articulare', items: [
-    { id: 'joint-types', name: 'Типы суставов', latin: 'Juncturae synoviales', icon: 'joint', tone: 'bone' },
-    { id: 'joint-moves', name: 'Суставные движения', latin: '', icon: 'move', tone: 'bone' },
-    { id: 'skull-joints', name: 'Соединения черепа', latin: 'Juncturae cranii', icon: 'sutures', tone: 'bone' },
-    { id: 'spine-joints', name: 'Соединения позвоночника', latin: 'Juncturae columnae vertebralis', icon: 'vertebrae', tone: 'bone' }
+  { id: 'joints', title: 'Bo\'g\'imlar va birikmalar', latin: 'Juncturae; Systema articulare', items: [
+    { id: 'joint-types', name: 'Bo\'g\'im turlari', latin: 'Juncturae synoviales', icon: 'joint', tone: 'bone' },
+    { id: 'joint-moves', name: 'Bo\'g\'im harakatlari', latin: '', icon: 'move', tone: 'bone' },
+    { id: 'skull-joints', name: 'Kalla suyagi birikmalari', latin: 'Juncturae cranii', icon: 'sutures', tone: 'bone' },
+    { id: 'spine-joints', name: 'Umurtqa pog\'onasi birikmalari', latin: 'Juncturae columnae vertebralis', icon: 'vertebrae', tone: 'bone' }
   ] },
-  { id: 'muscles', title: 'Мышцы; Мышечная система', latin: 'Musculi; Systema musculare', items: [
-    { id: 'm-head', name: 'Мышцы головы', latin: 'Musculi capitis', icon: 'mFan', tone: 'muscle' },
-    { id: 'm-neck', name: 'Мышцы шеи', latin: 'Musculi colli', icon: 'mStrap', tone: 'muscle' },
-    { id: 'm-arm', name: 'Мышцы верхней конечности', latin: 'Musculi membri superioris', icon: 'mBiceps', tone: 'muscle' },
-    { id: 'm-leg', name: 'Мышцы нижней конечности', latin: 'Musculi membri inferioris', icon: 'mLong', tone: 'muscle' }
+  { id: 'muscles', title: 'Mushaklar; Mushak tizimi', latin: 'Musculi; Systema musculare', items: [
+    { id: 'm-head', name: 'Bosh mushaklari', latin: 'Musculi capitis', icon: 'mFan', tone: 'muscle' },
+    { id: 'm-neck', name: 'Bo\'yin mushaklari', latin: 'Musculi colli', icon: 'mStrap', tone: 'muscle' },
+    { id: 'm-arm', name: 'Yuqori qo\'l mushaklari', latin: 'Musculi membri superioris', icon: 'mBiceps', tone: 'muscle' },
+    { id: 'm-leg', name: 'Pastki oyoq mushaklari', latin: 'Musculi membri inferioris', icon: 'mLong', tone: 'muscle' }
   ] },
-  { id: 'vascular', title: 'Сердце и сосуды', latin: 'Systema cardiovasculare', items: [
-    { id: 'arteries', name: 'Артерии', latin: 'Arteriae', icon: 'artery', tone: 'artery' },
-    { id: 'veins', name: 'Вены', latin: 'Venae', icon: 'vein', tone: 'vein' },
-    { id: 'lymph', name: 'Лимфатические сосуды', latin: 'Vasa lymphatica', icon: 'lymph', tone: 'lymph' }
+  { id: 'vascular', title: 'Yurak-qon tomir tizimi', latin: 'Systema cardiovasculare', items: [
+    { id: 'arteries', name: 'Arteriyalar', latin: 'Arteriae', icon: 'artery', tone: 'artery' },
+    { id: 'vein', name: 'Venalar', latin: 'Venae', icon: 'vein', tone: 'vein' },
+    { id: 'lymph', name: 'Limfa tomirlari', latin: 'Vasa lymphatica', icon: 'lymph', tone: 'lymph' }
   ] },
-  { id: 'nervous', title: 'Нервная система', latin: 'Systema nervosum', items: [
-    { id: 'brain', name: 'Головной мозг', latin: 'Encephalon', icon: 'brain', tone: 'nerve' },
-    { id: 'cord', name: 'Спинной мозг', latin: 'Medulla spinalis', icon: 'cord', tone: 'nerve' },
-    { id: 'cranial', name: 'Черепные нервы', latin: 'Nervi craniales', icon: 'cranial', tone: 'nerve' },
-    { id: 'spinal', name: 'Спинномозговые нервы', latin: 'Nervi spinales', icon: 'spinalNerves', tone: 'nerve' }
+  { id: 'nervous', title: 'Nerv tizimi', latin: 'Systema nervosum', items: [
+    { id: 'brain', name: 'Bosh miya', latin: 'Encephalon', icon: 'brain', tone: 'nerve' },
+    { id: 'cord', name: 'Orqa miya', latin: 'Medulla spinalis', icon: 'cord', tone: 'nerve' },
+    { id: 'cranial', name: 'Kalla miya nervlari', latin: 'Nervi craniales', icon: 'cranial', tone: 'nerve' },
+    { id: 'spinal', name: 'Orqa miya nervlari', latin: 'Nervi spinales', icon: 'spinalNerves', tone: 'nerve' }
   ] }
 ];
 
-/* Иконки-заглушки для карточек (viewBox 96×96) */
 function ribs() {
   var s = '<path d="M48 8v80"/>';
   for (var i = 0; i < 6; i++) {
@@ -578,14 +620,13 @@ var ICON = {
   cord: cordIcon(),
   cranial: '<circle cx="48" cy="22" r="10"/><path d="M48 32c-6 14-16 20-26 26M48 32c6 14 16 20 26 26M48 32v52M42 28c-12 4-20 2-28 10M54 28c12 4 20 2 28 10"/>',
   spinalNerves: spinalNervesIcon(),
-  lungs: '<path d="M40 24c-8 6-18 22-20 40-1 10 6 16 14 14 4-1 6-4 6-8V32c0-4-1-6 0-8z"/><path d="M56 24c8 6 18 22 20 40 1 10-6 16-14 14-4-1-6-4-6-8V32c0-4 1-6 0-8z"/><path class="i-a" d="M48 8v26M48 34l-8 9M48 34l8 9"/>',
+  lungs: '<path d="M40 24c-8 6-18 22-20 40-1 10 6 16 14 14-4-1-6-4-6-8V32c0-4-1-6 0-8z"/><path d="M56 24c8 6 18 22 20 40 1 10-6 16-14 14-4-1-6-4-6-8V32c0-4 1-6 0-8z"/><path class="i-a" d="M48 8v26M48 34l-8 9M48 34l8 9"/>',
   airways: '<path d="M48 8v28M48 36L30 54M48 36L66 54"/><path class="i-a" d="M30 54L18 70M30 54L30 78M30 54L42 70M66 54L78 70M66 54L66 78M66 54L54 70"/>'
 };
 function icon(name) {
   return '<svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[name] + '</svg>';
 }
 
-/* Иконки интерфейса (viewBox 24×24) */
 var UI = {
   back: '<path d="M20 12H4M10 6l-6 6 6 6"/>',
   grid: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
@@ -620,10 +661,12 @@ var state = {
   stack: [{ type: 'catalog' }],
   query: '',
   list: store.get('atlas-list') === '1',
+  theme: store.get('atlas-theme') || 'dark',
   collapsed: new Set(readCollapsed())
 };
 
-/* ---------- Навигация ---------- */
+document.documentElement.setAttribute('data-theme', state.theme);
+
 function renderCrumbs(root, items) {
   root.textContent = '';
   items.forEach(function (it, i) {
@@ -652,7 +695,7 @@ function setView(v) {
 function render(entry) {
   if (entry.type === 'catalog') {
     setView('catalog');
-    renderCrumbs($('#crumbsCatalog'), [{ l: 'Главная' }, { l: 'Атлас анатомии', cur: true }]);
+    renderCrumbs($('#crumbsCatalog'), [{ l: 'Bosh sahifa' }, { l: 'Anatomiya Atlasi', cur: true }]);
     renderCatalog();
   } else {
     setView('viewer');
@@ -665,7 +708,6 @@ function back() {
 }
 function home() { state.stack = [{ type: 'catalog' }]; render(state.stack[0]); }
 
-/* ---------- Каталог ---------- */
 function renderCatalog() {
   var q = state.query.trim().toLowerCase();
   var root = $('#sections');
@@ -715,14 +757,14 @@ function renderCatalog() {
       } else {
         card.classList.add('soon');
         card.disabled = true;
-        card.appendChild(el('span', 'badge', 'Скоро'));
+        card.appendChild(el('span', 'badge', 'Tez kunda'));
       }
       grid.appendChild(card);
     });
     section.append(head, grid);
     root.appendChild(section);
   });
-  if (!shown) root.appendChild(el('p', 'empty', 'Ничего не найдено. Попробуйте другое название.'));
+  if (!shown) root.appendChild(el('p', 'empty', 'Hech narsa topilmadi. Boshqa nom bilan qidirib ko\'ring.'));
 }
 function updateLayoutBtn() {
   var b = $('#btnLayout');
@@ -730,10 +772,9 @@ function updateLayoutBtn() {
   b.setAttribute('aria-pressed', String(state.list));
 }
 
-/* ---------- 3D-просмотрщик ---------- */
 var V = { ready: false, failed: false, running: false, parts: [], items: [], selected: null, isolated: false, wire: false, group: null, initial: null };
 var loadId = 0;
-var DEMO_NOTE = 'Модель для этого раздела ещё не подключена. Показана демонстрационная заготовка, на ней можно проверить вращение, слои и выбор.';
+var DEMO_NOTE = 'Bu bo\'lim uchun model hali ulanmagan. Namuna shakl ko\'rsatilmoqda, unda aylantirish va qatlamlarni tekshirib ko\'rishingiz mumkin.';
 
 function setNote(msg) {
   var n = $('#stageNote');
@@ -782,7 +823,7 @@ function initViewer() {
     return true;
   } catch (e) {
     V.failed = true;
-    setNote('3D-просмотр недоступен: не загрузилась библиотека или браузер не поддерживает WebGL. Обновите страницу.');
+    setNote('3D-ko\'rish mavjud emas: kutubxona yuklanmadi yoki brauzer WebGLni qo\'llab-quvvatlamaydi.');
     return false;
   }
 }
@@ -811,14 +852,14 @@ function buildDemo() {
   var g = new THREE.Group();
   function mat(c) { return new THREE.MeshStandardMaterial({ color: c, roughness: 0.65, metalness: 0.05 }); }
   var ball = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), mat(0xd9caa5));
-  ball.name = 'Демо: шар';
+  ball.name = 'Namuna: shar';
   ball.position.set(-1.7, 0.6, 0);
   var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 3, 40), mat(0xc9b88f));
-  rod.name = 'Демо: стержень';
+  rod.name = 'Namuna: sterjen';
   rod.rotation.z = Math.PI / 2.6;
   rod.position.set(0.2, -0.4, 0);
   var ring = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.26, 24, 64), mat(0x7cb9cc));
-  ring.name = 'Демо: кольцо';
+  ring.name = 'Namuna: halqa';
   ring.position.set(1.9, -1.1, 0);
   ring.rotation.x = Math.PI / 3;
   g.add(ball, rod, ring);
@@ -842,7 +883,7 @@ function partName(m, i) {
   var n = (m.userData && m.userData.name) || (m.name && m.name.trim()) || (m.parent && m.parent.name && m.parent.name.trim()) || '';
   if (!(m.userData && m.userData.name)) n = n.replace(/_/g, ' ');
   n = n.trim();
-  return n || 'Часть ' + (i + 1);
+  return n || 'Qism ' + (i + 1);
 }
 function setModel(group) {
   clearModel();
@@ -888,7 +929,7 @@ function renderParts() {
     var eye = el('button', 'eye');
     eye.type = 'button';
     eye.setAttribute('aria-pressed', 'true');
-    eye.setAttribute('aria-label', 'Показать или скрыть: ' + name);
+    eye.setAttribute('aria-label', 'Ko\'rsatish yoki yashirish: ' + name);
     eye.innerHTML = ui('eyeOn', 'on') + ui('eyeOff', 'off');
     var nb = el('button', 'pname', name);
     nb.type = 'button';
@@ -948,12 +989,12 @@ function showAll() {
 function updateIsolate() {
   var b = $('#pIsolate');
   b.setAttribute('aria-pressed', String(V.isolated));
-  b.textContent = V.isolated ? 'Снять изоляцию' : 'Изолировать';
+  b.textContent = V.isolated ? 'Izolyatsiyani olish' : 'Ajratib ko\'rsatish';
   b.disabled = !V.isolated && !V.selected;
 }
 
 function openModel(entry) {
-  renderCrumbs($('#crumbsViewer'), [{ l: 'Главная' }, { l: 'Атлас анатомии' }, { l: entry.title, cur: true }]);
+  renderCrumbs($('#crumbsViewer'), [{ l: 'Bosh sahifa' }, { l: 'Anatomiya Atlasi' }, { l: entry.title, cur: true }]);
   $('#vTitle').textContent = entry.title;
   var lat = $('#vLatin');
   lat.textContent = entry.latin || '';
@@ -976,16 +1017,15 @@ function openModel(entry) {
     if (id !== loadId) return;
     setModel(gltf.scene);
     var nh = V.parts.filter(function (p) { return p.userData.hidden; }).length;
-    setNote(nh ? 'Скрыто частей: ' + nh + ' (составные органы, полости, дубли). Показать: значок глаза в списке или «Показать все».' : '');
+    setNote(nh ? 'Yashirilgan qismlar: ' + nh + '. Ko\'rsatish uchun ro\'yxatdagi ko\'z belgisini bosing.' : '');
     V.noteTemp = nh > 0;
   }
-  var bad = 'Файл не удалось прочитать. Нужен бинарный файл .glb.';
+  var bad = 'Faylni o\'qib bo\'lmadi. .glb formati kerak.';
   if (entry.buffer) {
     try { new THREE.GLTFLoader().parse(entry.buffer, '', done, function () { demo(bad); }); }
     catch (e) { demo(bad); }
   } else if (entry.glb) {
-    /* Файлы моделей лежат рядом со страницей как текст base64 (<путь>.txt), потому что .glb площадка не отдаёт. */
-    setNote('Загрузка модели…');
+    setNote('Model yuklanmoqda...');
     fetch(entry.glb + '.txt').then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.text();
@@ -996,19 +1036,25 @@ function openModel(entry) {
       if (id !== loadId) return;
       new THREE.GLTFLoader().parse(buf.buffer, '', done, function () { demo(bad); });
     }).catch(function () {
-      demo('Не удалось загрузить файл модели. Обновите страницу и откройте раздел ещё раз.');
+      demo('Model faylini yuklab bo\'lmadi.');
     });
   } else {
     demo();
   }
 }
 
-/* ---------- Меню, окна, события ---------- */
 function closeMenu() {
   $('#menu').hidden = true;
   $('#btnMenu').setAttribute('aria-expanded', 'false');
 }
 function openFilePicker() { closeMenu(); $('#glbFile').click(); }
+
+function toggleTheme() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', state.theme);
+  store.set('atlas-theme', state.theme);
+  closeMenu();
+}
 
 function init() {
   document.querySelectorAll('[data-i]').forEach(function (n) {
@@ -1027,6 +1073,7 @@ function init() {
     this.setAttribute('aria-expanded', String(!m.hidden));
   });
   document.addEventListener('click', function (e) { if (!e.target.closest('.menu-wrap')) closeMenu(); });
+  $('#menuTheme').addEventListener('click', toggleTheme);
   $('#menuOpen').addEventListener('click', openFilePicker);
   $('#noticeOpen').addEventListener('click', openFilePicker);
   $('#menuAbout').addEventListener('click', function () { closeMenu(); $('#about').hidden = false; $('#aboutClose').focus(); });
@@ -1043,10 +1090,10 @@ function init() {
     e.target.value = '';
     if (!f) return;
     f.arrayBuffer().then(function (buf) {
-      push({ type: 'viewer', title: f.name.replace(/\.[^.]+$/, ''), latin: 'Файл с вашего устройства', buffer: buf });
+      push({ type: 'viewer', title: f.name.replace(/\.[^.]+$/, ''), latin: 'Qurilmangizdan yuklangan fayl', buffer: buf });
     }).catch(function () {
       push({ type: 'viewer', title: f.name, latin: '', glb: null });
-      setNote('Не удалось открыть файл.');
+      setNote('Faylni ochib bo\'lmadi.');
     });
   });
 
